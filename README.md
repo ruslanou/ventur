@@ -24,7 +24,6 @@ Ventur is a gamified city exploration passport app for **Montgomery, Alabama**. 
 | Backend | FastAPI (Python 3.11) |
 | AI Model | Google Gemini 2.5 Flash Lite |
 | Vector Database | ChromaDB |
-| AI Orchestration | LangChain |
 | Live Web Data | Bright Data MCP |
 | Deployment | Google Cloud Run + Vercel |
 
@@ -40,8 +39,8 @@ Ventur is a gamified city exploration passport app for **Montgomery, Alabama**. 
 
 ```bash
 # Clone the repo
-git clone https://github.com/YOUR_USERNAME/ventur-backend.git
-cd ventur-backend
+git clone https://github.com/ruslanou/ventur.git
+cd ventur/backend
 
 # Create virtual environment
 python3.11 -m venv venv
@@ -85,14 +84,28 @@ python load_data.py
 |---|---|---|
 | GET | `/` | Health check |
 | GET | `/test-gemini` | Test Gemini connection |
-| POST | `/chat` | AI city guide chat |
+| POST | `/chat` | AI city guide chat (RAG-powered) |
+| GET | `/places` | All places (optional `?category=` filter) |
+| GET | `/places/{place_id}` | Single place details |
+| POST | `/stamp` | Collect a stamp at a place |
+| GET | `/profile/{user_id}` | User level, points, and stamps |
+| GET | `/place-photo/{place_id}` | Proxied Google Places photo |
 | GET | `/docs` | Swagger UI |
 
-### Example Chat Request
+### Example Requests
 ```bash
+# AI chat
 curl -X POST http://localhost:8000/chat \
   -H "Content-Type: application/json" \
   -d '{"message": "What are the best restaurants in Montgomery?"}'
+
+# Collect a stamp
+curl -X POST http://localhost:8000/stamp \
+  -H "Content-Type: application/json" \
+  -d '{"place_id": "rest_001", "user_id": "demo_user"}'
+
+# Get user profile
+curl http://localhost:8000/profile/demo_user
 ```
 
 ---
@@ -110,7 +123,7 @@ curl -X POST http://localhost:8000/chat \
 
 ## 📍 Montgomery Places
 
-Ventur features 20+ real Montgomery venues across categories:
+Ventur features 290+ real Montgomery venues across categories:
 - 🍽️ Restaurants (Central Restaurant, Dreamland BBQ, Vintage Year...)
 - 🍸 Bars (Cahaba Brewing Co., Sky Bar Rooftop, Irish Bred Pub...)
 - 🏛️ Attractions (Rosa Parks Museum, Legacy Museum, State Capitol...)
