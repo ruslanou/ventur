@@ -1,0 +1,36 @@
+# Environment variables — NEVER commit these!
+.env
+.env.local
+.env.production
+
+# Python virtual environment
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# ChromaDB local database
+chroma_db/
+
+# Fetched data cache
+fetched_places.json
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Logs
+*.log
+uvicorn.log
+
+# Distribution
+dist/
+build/
+*.egg-info/
