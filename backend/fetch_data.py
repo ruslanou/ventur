@@ -53,7 +53,7 @@ async def fetch_google_places(place_type: str, keyword: str = None):
         return []
 
     places = []
-    for result in data.get("results", [])[:10]:  # Max 10 per type
+    for result in data.get("results", [])[:15]:  # Max 15 per type
         place = {
             "id": f"google_{result['place_id']}",
             "name": result.get("name", ""),
@@ -361,9 +361,15 @@ async def main():
     if GOOGLE_PLACES_KEY:
         google_types = [
             ("restaurant", None),
+            ("restaurant", "bbq southern soul food"),
             ("bar", None),
+            ("night_club", None),
+            ("cafe", None),
             ("tourist_attraction", None),
             ("museum", None),
+            ("lodging", None),
+            ("park", "Montgomery Alabama park"),
+            ("stadium", None),
         ]
         for place_type, keyword in google_types:
             places = await fetch_google_places(place_type, keyword)
@@ -389,6 +395,15 @@ async def main():
     # ── Source 3: Montgomery Open Data ──
     open_data_places = await fetch_montgomery_open_data()
     all_places.extend(open_data_places)
+
+    # ── Source 4: Curated Montgomery Places (handpicked for passport) ──
+    print("\n📋 Loading curated Montgomery places...")
+    from montgomery_places import MONTGOMERY_PLACES
+    for p in MONTGOMERY_PLACES:
+        curated = {**p, "source": "curated"}
+        all_places.append(curated)
+        print(f"  ✅ {p['name']} ({p['category']})")
+    print(f"  → {len(MONTGOMERY_PLACES)} curated places added")
 
     # ── Deduplicate & Load ──
     unique_places = deduplicate_places(all_places)
