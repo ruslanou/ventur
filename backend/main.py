@@ -5,8 +5,10 @@ Day 3: ChromaDB RAG + /places, /stamp, /profile endpoints
 """
 
 import os
+import requests
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from typing import Optional
 import google.generativeai as genai
@@ -41,8 +43,10 @@ except Exception as e:
     collection = None
 
 # ── In-Memory User Store (hackathon demo) ─────────────────────
-# { user_id: { "points": int, "stamps": [place_id, ...], "level": str } }
+# { user_id: { "points": int, "stamps": [place_id, ...], "level": str, "history": [...] } }
 users: dict = {}
+
+HISTORY_LIMIT = 10  # keep last N messages per user
 
 LEVEL_THRESHOLDS = [
     (0,    "Explorer 🌱"),
@@ -60,7 +64,7 @@ def get_level(points: int) -> str:
 
 def get_or_create_user(user_id: str) -> dict:
     if user_id not in users:
-        users[user_id] = {"points": 0, "stamps": [], "level": "Explorer 🌱"}
+        users[user_id] = {"points": 0, "stamps": [], "level": "Explorer 🌱", "history": []}
     return users[user_id]
 
 # ── System Prompt ──────────────────────────────────────────────
@@ -153,9 +157,50 @@ async def chat(request: ChatRequest):
     try:
         rag_context = build_rag_context(request.message)
         context_section = f"\n\n{rag_context}" if rag_context else ""
-        full_prompt = f"{BASE_SYSTEM_PROMPT}{context_section}\n\nUser: {request.message}\n\nVentur AI:"
+
+        # Build stamp-awareness section
+        stamp_section = ""
+        history_section = ""
+        if request.user_id:
+            user = get_or_create_user(request.user_id)
+
+            # Stamps the user has already collected
+            if user["stamps"]:
+                from montgomery_places import get_place_by_id as _gpbi
+                visited_names = [p["name"] for pid in user["stamps"] if (p := _gpbi(pid))]
+                stamp_section = (
+                    f"\n\nUser context: This user has already visited and stamped: "
+                    f"{', '.join(visited_names)}. "
+                    f"They have {user['points']} points and are at level '{user['level']}'. "
+                    f"Prioritize recommending places they haven't visited yet."
+                )
+
+            # Conversation history
+            if user["history"]:
+                lines = []
+                for turn in user["history"][-HISTORY_LIMIT:]:
+                    lines.append(f"User: {turn['user']}")
+                    lines.append(f"Ventur AI: {turn['assistant']}")
+                history_section = "\n\nConversation so far:\n" + "\n".join(lines)
+
+        full_prompt = (
+            f"{BASE_SYSTEM_PROMPT}"
+            f"{stamp_section}"
+            f"{context_section}"
+            f"{history_section}"
+            f"\n\nUser: {request.message}\n\nVentur AI:"
+        )
         response = model.generate_content(full_prompt)
-        return ChatResponse(response=response.text, status="success")
+        reply = response.text
+
+        # Save to history
+        if request.user_id:
+            user = get_or_create_user(request.user_id)
+            user["history"].append({"user": request.message, "assistant": reply})
+            if len(user["history"]) > HISTORY_LIMIT:
+                user["history"] = user["history"][-HISTORY_LIMIT:]
+
+        return ChatResponse(response=reply, status="success")
     except Exception as e:
         return ChatResponse(response=f"Sorry, something went wrong: {str(e)}", status="error")
 
@@ -234,3 +279,26 @@ def get_profile(user_id: str):
         "next_level": next_level_info,
         "stamped_places": stamped_places,
     }
+
+@app.get("/place-photo/{place_id}")
+def get_place_photo(place_id: str, maxwidth: int = 600):
+    """Proxy Google Places photo bytes server-side (avoids API key referrer restrictions)."""
+    from fastapi.responses import Response
+    place = get_place_by_id(place_id)
+    if not place:
+        raise HTTPException(status_code=404, detail="Place not found")
+
+    photo_ref = place.get("photo_ref")
+    if not photo_ref:
+        raise HTTPException(status_code=404, detail="No photo available for this place")
+
+    google_key = os.getenv("GOOGLE_PLACES_API_KEY")
+    photo_url = (
+        f"https://maps.googleapis.com/maps/api/place/photo"
+        f"?maxwidth={maxwidth}&photo_reference={photo_ref}&key={google_key}"
+    )
+    resp = requests.get(photo_url, timeout=10)
+    if resp.status_code != 200:
+        raise HTTPException(status_code=502, detail="Failed to fetch photo from Google")
+    content_type = resp.headers.get("Content-Type", "image/jpeg")
+    return Response(content=resp.content, media_type=content_type)
