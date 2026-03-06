@@ -10,11 +10,14 @@ Usage: python fetch_data.py
 """
 
 import os
+import re
 import json
 import asyncio
 import httpx
 import chromadb
 from dotenv import load_dotenv
+from mcp import ClientSession
+from mcp.client.streamable_http import streamablehttp_client
 
 load_dotenv()
 
@@ -122,62 +125,68 @@ def extract_tags(result: dict, place_type: str) -> list:
 # 2. BRIGHT DATA MCP
 # ─────────────────────────────────────────────
 
-async def fetch_brightdata(query: str):
-    """Fetch live Montgomery data using Bright Data web search"""
-    print(f"🌐 Bright Data searching: '{query}'...")
-
-    url = f"https://mcp.brightdata.com/mcp?token={BRIGHT_DATA_TOKEN}"
-
-    payload = {
-        "jsonrpc": "2.0",
-        "id": 1,
-        "method": "tools/call",
-        "params": {
-            "name": "search_engine",
-            "arguments": {
-                "query": query,
-                "limit": 5
-            }
-        }
-    }
-
+async def fetch_brightdata_session(session: ClientSession, query: str) -> list:
+    """Run a single Bright Data search query inside an existing MCP session."""
+    print(f"🌐 Bright Data: '{query}'...")
     try:
-        async with httpx.AsyncClient(timeout=30) as client:
-            response = await client.post(
-                url,
-                json=payload,
-                headers={"Content-Type": "application/json"}
-            )
-            data = response.json()
-
-        results = data.get("result", {}).get("content", [])
+        result = await session.call_tool("search_engine", {"query": query, "limit": 10})
+        text = result.content[0].text if result.content else "{}"
+        data = json.loads(text)
         places = []
-
-        for item in results:
-            if isinstance(item, dict) and item.get("type") == "text":
-                text = item.get("text", "")
-                place = {
-                    "id": f"brightdata_{abs(hash(text)) % 100000}",
-                    "name": extract_name_from_text(text, query),
-                    "category": guess_category(query),
-                    "subcategory": "Live Web Data",
-                    "address": "Montgomery, AL",
-                    "neighborhood": "Montgomery",
-                    "description": text[:500] if text else "Popular Montgomery destination.",
-                    "hours": "Check website for current hours",
-                    "price_range": "$$",
-                    "points": 150,
-                    "tags": ["montgomery", "live data"],
-                    "source": "bright_data",
-                }
-                if place["name"]:
-                    places.append(place)
-                    print(f"  ✅ Found: {place['name']}")
-
+        for item in data.get("organic", []):
+            title = item.get("title", "").strip()
+            desc = item.get("description", "").strip()
+            link = item.get("link", "")
+            if not title or not desc:
+                continue
+            # Clean title: strip trailing " - Site Name" patterns, truncate long titles
+            name = title.split(" - ")[0].split(" | ")[0][:80].strip()
+            place = {
+                "id": f"brightdata_{abs(hash(link or title)) % 1000000}",
+                "name": name,
+                "category": guess_category(query),
+                "subcategory": "Web Reference",
+                "address": "Montgomery, AL",
+                "neighborhood": "Montgomery",
+                "description": f"{name}. {desc}"[:600],
+                "hours": "Check website for current hours",
+                "price_range": "$$",
+                "points": 150,
+                "tags": ["montgomery", "bright data", "web reference"],
+                "source": "bright_data",
+            }
+            places.append(place)
+            print(f"  ✅ {name[:60]}")
         return places
-
     except Exception as e:
-        print(f"  ⚠️ Bright Data error: {e}")
+        print(f"  ⚠️ Bright Data query error: {e}")
+        return []
+
+
+async def fetch_brightdata_all(queries: list) -> list:
+    """Open one MCP session and run all queries."""
+    if not BRIGHT_DATA_TOKEN:
+        print("⚠️ BRIGHT_DATA_TOKEN not set — skipping")
+        return []
+    url = f"https://mcp.brightdata.com/mcp?token={BRIGHT_DATA_TOKEN}"
+    print("🌐 Connecting to Bright Data MCP...")
+    try:
+        async with streamablehttp_client(url) as (read, write, _):
+            async with ClientSession(read, write) as session:
+                await session.initialize()
+                tools = await session.list_tools()
+                print(f"  → {len(tools.tools)} tools available: {[t.name for t in tools.tools]}")
+                all_places = []
+                for query in queries:
+                    places = await fetch_brightdata_session(session, query)
+                    all_places.extend(places)
+                    await asyncio.sleep(1)
+                # Scrape TripAdvisor within the same session
+                ta_places = await fetch_tripadvisor_restaurants(session)
+                all_places.extend(ta_places)
+                return all_places
+    except Exception as e:
+        print(f"  ⚠️ Bright Data MCP connection failed: {e}")
         return []
 
 
@@ -205,57 +214,169 @@ def guess_category(query: str) -> str:
 
 
 # ─────────────────────────────────────────────
+# 2b. TRIPADVISOR SCRAPE (via Bright Data)
+# ─────────────────────────────────────────────
+
+_TA_LINK_RE = re.compile(r'\\\[\n+([^\n\[\\]{2,80}?)\n+\]\\\(/Restaurant')
+_TA_RATING_RE = re.compile(r'(\d+\.?\d*)\s+of\s+5\s+bubbles?')
+
+
+def _ta_is_junk(name: str) -> bool:
+    if name.startswith('(') or name[-1] in '.!?':
+        return True
+    generic = {'amazing', 'excellent', 'great', 'nice', 'good', 'love', 'best',
+               'terrible', 'awful', 'ok', 'okay', 'wow', 'perfect'}
+    return name.lower() in generic
+
+
+def parse_tripadvisor_markdown(markdown: str) -> list:
+    """Parse restaurant entries from TripAdvisor scraped markdown (escaped-bracket format)."""
+    places = []
+    seen = set()
+
+    for m in _TA_LINK_RE.finditer(markdown):
+        name = m.group(1).strip()
+        if not name or len(name) < 3 or _ta_is_junk(name):
+            continue
+
+        # Find the closing ) of the URL link
+        url_end = markdown.find(')', m.end())
+        if url_end == -1 or url_end - m.end() > 200:
+            continue
+        after_link = url_end + 1
+
+        # Rating must be within 80 chars of link end (real restaurant entries)
+        ctx_tight = markdown[after_link: after_link + 80]
+        rating_m = _TA_RATING_RE.search(ctx_tight)
+        if not rating_m:
+            continue
+        rating = float(rating_m.group(1))
+        if rating == 0:
+            continue
+
+        key = name.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+
+        ctx = markdown[after_link: after_link + 400]
+        reviews_m = re.search(r'\(([\d,]+)\s+reviews?\)', ctx)
+        price_m = re.search(r'(\$+)', ctx)
+        cuisine_m = re.search(r'([A-Za-z][A-Za-z ,&]{1,40}?)(\$+)', ctx)
+
+        reviews = reviews_m.group(1).replace(',', '') if reviews_m else '0'
+        price = price_m.group(1) if price_m else '$$'
+        cuisine = cuisine_m.group(1).strip() if cuisine_m else ''
+        if len(cuisine) > 40:
+            cuisine = ''
+
+        tags = ['montgomery', 'restaurant', 'tripadvisor']
+        if cuisine:
+            tags.extend([c.strip().lower() for c in cuisine.split(',')[:3]])
+        if rating >= 4.5:
+            tags.append('highly rated')
+        elif rating >= 4.0:
+            tags.append('top rated')
+
+        desc_parts = [f"{name} — restaurant in Montgomery, Alabama."]
+        if cuisine:
+            desc_parts.append(f"Cuisine: {cuisine}.")
+        if rating > 0:
+            desc_parts.append(f"TripAdvisor rating: {rating}/5 ({reviews} reviews).")
+
+        places.append({
+            'id': f'tripadvisor_{abs(hash(name.lower())) % 1000000}',
+            'name': name,
+            'category': 'Restaurant',
+            'subcategory': cuisine.split(',')[0].strip() if cuisine else 'Restaurant',
+            'address': 'Montgomery, AL',
+            'neighborhood': 'Montgomery',
+            'description': ' '.join(desc_parts)[:600],
+            'hours': 'Check TripAdvisor for current hours',
+            'price_range': price,
+            'points': 150,
+            'rating': rating,
+            'tags': tags,
+            'source': 'tripadvisor',
+        })
+
+    return places
+
+
+async def fetch_tripadvisor_restaurants(session: ClientSession) -> list:
+    """Scrape TripAdvisor Montgomery restaurants page via Bright Data scrape_as_markdown."""
+    print("🍽️  Scraping TripAdvisor Montgomery restaurants...")
+    try:
+        result = await session.call_tool('scrape_as_markdown', {
+            'url': 'https://www.tripadvisor.com/Restaurants-g30712-Montgomery_Alabama.html'
+        })
+        text = result.content[0].text if result.content else ''
+        if not text:
+            print("  ⚠️ No content returned from TripAdvisor")
+            return []
+        places = parse_tripadvisor_markdown(text)
+        print(f"  → {len(places)} restaurants parsed from TripAdvisor")
+        for p in places:
+            print(f"  ✅ {p['name']} ({p.get('rating', '?')}⭐ {p['price_range']})")
+        return places
+    except Exception as e:
+        print(f"  ⚠️ TripAdvisor scrape error: {e}")
+        return []
+
+
+# ─────────────────────────────────────────────
 # 3. MONTGOMERY OPEN DATA PORTAL
 # ─────────────────────────────────────────────
 
 async def fetch_montgomery_open_data():
-    """Fetch points of interest from Montgomery Open Data ArcGIS API"""
-    print("🏛️ Fetching from Montgomery Open Data Portal...")
+    """Fetch official POI data from Montgomery Open Data Portal (CSV)."""
+    print("🏛️ Fetching from Montgomery Open Data Portal (POI CSV)...")
 
-    # ArcGIS REST API for Montgomery POIs
-    url = "https://services.arcgis.com/PkLBxBKhHZkW9fhr/arcgis/rest/services/PointofInterest/FeatureServer/0/query"
-    params = {
-        "where": "1=1",
-        "outFields": "*",
-        "f": "json",
-        "resultRecordCount": 50,
-    }
+    url = (
+        "https://opendata.arcgis.com/api/v3/datasets/"
+        "4c077a7c159a414983b5cd4b99f9f921_0/downloads/data"
+        "?format=csv&spatialRefId=4326"
+    )
 
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
-            response = await client.get(url, params=params)
-            data = response.json()
+        async with httpx.AsyncClient(timeout=20) as client:
+            response = await client.get(url)
+            response.raise_for_status()
 
-        if "error" in data:
-            print(f"  ⚠️ Open Data error: {data['error']}")
-            return []
-
-        features = data.get("features", [])
+        lines = response.text.strip().splitlines()
+        # Parse CSV manually (simple, no pandas needed)
+        import csv, io
+        reader = csv.DictReader(io.StringIO(response.text))
         places = []
 
-        for feature in features:
-            attrs = feature.get("attributes", {})
-            name = attrs.get("Name") or attrs.get("NAME") or attrs.get("name", "")
+        for row in reader:
+            name = row.get("FACILITYID", "").strip()
+            poi_type = row.get("Type", "").strip()
+            address = row.get("FULLADDR", "Montgomery, AL").strip()
+            description = row.get("Description", "").strip()
+            obj_id = row.get("OBJECTID", "")
+
             if not name:
                 continue
 
             place = {
-                "id": f"opendata_{attrs.get('OBJECTID', abs(hash(name)))}",
+                "id": f"opendata_{obj_id}",
                 "name": name,
-                "category": map_open_data_type(attrs.get("Type") or attrs.get("TYPE", "")),
-                "subcategory": attrs.get("SubType") or attrs.get("SUBTYPE") or "Point of Interest",
-                "address": attrs.get("Address") or attrs.get("ADDRESS") or "Montgomery, AL",
-                "neighborhood": attrs.get("Neighborhood") or "Montgomery",
-                "description": attrs.get("Description") or attrs.get("DESCRIPTION") or f"{name} — a point of interest in Montgomery, Alabama.",
-                "hours": attrs.get("Hours") or "Check website for hours",
-                "price_range": "$$",
-                "points": 200,
-                "tags": ["montgomery", "official", "point of interest"],
+                "category": map_open_data_type(poi_type),
+                "subcategory": poi_type or "Point of Interest",
+                "address": f"{address}, Montgomery, AL" if address and "Montgomery" not in address else address,
+                "neighborhood": "Montgomery",
+                "description": description if description else f"{name} — an official Montgomery point of interest.",
+                "hours": "Check website for hours",
+                "price_range": "$",
+                "points": 250,
+                "tags": ["montgomery", "official city data", poi_type.lower()],
                 "source": "montgomery_open_data",
             }
             places.append(place)
-            print(f"  ✅ {place['name']} ({place['category']})")
+            print(f"  ✅ {name} ({poi_type})")
 
+        print(f"  → {len(places)} official POIs loaded")
         return places
 
     except Exception as e:
@@ -263,17 +384,92 @@ async def fetch_montgomery_open_data():
         return []
 
 
+async def fetch_montgomery_parks():
+    """Fetch park data with amenities from Montgomery Open Data Portal (CSV)."""
+    print("🌳 Fetching from Montgomery Parks & Trail dataset...")
+
+    url = (
+        "https://opendata.arcgis.com/api/v3/datasets/"
+        "3a030d87c47d490ca32e72a963a3d0c0_0/downloads/data"
+        "?format=csv&spatialRefId=4326"
+    )
+
+    AMENITY_FIELDS = [
+        "SWIMMING", "HIKING", "FISHING", "PICNIC", "PLAYGROUND",
+        "GOLF", "SOCCER", "BASEBALL", "SOFTBALL", "BASKETBALL",
+        "TENNIS", "SKATEBOARD", "BOATING", "CAMPING", "PETS",
+    ]
+
+    try:
+        import csv, io
+        async with httpx.AsyncClient(timeout=20) as client:
+            response = await client.get(url)
+            response.raise_for_status()
+
+        reader = csv.DictReader(io.StringIO(response.text))
+        places = []
+
+        for row in reader:
+            name = row.get("FACILITYID", "").strip()
+            address = row.get("FULLADDR", "Montgomery, AL").strip()
+            hours = row.get("OPERHOURS", "").strip()
+            days = row.get("OPERDAYS", "").strip()
+            area = row.get("PARKAREA", "").strip()
+            obj_id = row.get("OBJECTID", "")
+
+            if not name:
+                continue
+
+            amenities = [f.lower() for f in AMENITY_FIELDS if row.get(f, "N") == "Y"]
+
+            hours_str = f"{days} {hours}".strip() if days or hours else "Check park hours"
+            area_str = f"{float(area):.1f} acres" if area else ""
+            amenity_str = ", ".join(amenities) if amenities else "general park"
+
+            description = (
+                f"{name} is a Montgomery city park"
+                + (f" ({area_str})" if area_str else "")
+                + f". Activities available: {amenity_str}."
+                + (f" Hours: {hours_str}." if hours_str else "")
+            )
+
+            place = {
+                "id": f"park_{abs(hash(name)) % 1000000}",
+                "name": name,
+                "category": "Attraction",
+                "subcategory": "Park",
+                "address": f"{address}, Montgomery, AL" if "Montgomery" not in address else address,
+                "neighborhood": "Montgomery",
+                "description": description,
+                "hours": hours_str,
+                "price_range": "Free",
+                "points": 150,
+                "tags": ["montgomery", "park", "outdoor"] + amenities,
+                "source": "montgomery_parks",
+            }
+            places.append(place)
+            print(f"  ✅ {name} ({amenity_str[:50]})")
+
+        print(f"  → {len(places)} parks loaded")
+        return places
+
+    except Exception as e:
+        print(f"  ⚠️ Parks fetch error: {e}")
+        return []
+
+
 def map_open_data_type(type_str: str) -> str:
-    type_lower = (type_str or "").lower()
-    if any(w in type_lower for w in ["restaurant", "food", "dining"]):
-        return "Restaurant"
-    elif any(w in type_lower for w in ["bar", "pub", "brewery"]):
-        return "Bar"
-    elif any(w in type_lower for w in ["museum", "historic", "park", "recreation"]):
-        return "Attraction"
-    elif any(w in type_lower for w in ["hotel", "lodging"]):
-        return "Hotel"
-    return "Attraction"
+    mapping = {
+        "Museum": "Attraction",
+        "Historical Place": "Attraction",
+        "Arts Center": "Attraction",
+        "Recreation": "Attraction",
+        "Sports Field": "Attraction",
+        "Theatre": "Attraction",
+        "Zoo": "Attraction",
+        "Farmer's Market": "Attraction",
+    }
+    return mapping.get(type_str, "Attraction")
 
 
 # ─────────────────────────────────────────────
@@ -378,23 +574,23 @@ async def main():
     else:
         print("⚠️ GOOGLE_PLACES_API_KEY not found in .env — skipping")
 
-    # ── Source 2: Bright Data ──
-    if BRIGHT_DATA_TOKEN:
-        bright_queries = [
-            "best restaurants Montgomery AL 2024",
-            "top bars nightlife Montgomery Alabama",
-            "must visit attractions Montgomery AL",
-        ]
-        for query in bright_queries:
-            places = await fetch_brightdata(query)
-            all_places.extend(places)
-            await asyncio.sleep(1)  # Rate limiting
-    else:
-        print("⚠️ BRIGHT_DATA_TOKEN not found in .env — skipping")
+    # ── Source 2: Bright Data MCP ──
+    bright_queries = [
+        "best restaurants Montgomery Alabama 2024",
+        "top bars nightlife breweries Montgomery Alabama",
+        "must visit tourist attractions museums Montgomery Alabama",
+        "best hotels stay Montgomery Alabama",
+    ]
+    bright_places = await fetch_brightdata_all(bright_queries)
+    all_places.extend(bright_places)
 
-    # ── Source 3: Montgomery Open Data ──
+    # ── Source 3: Montgomery Open Data — POIs ──
     open_data_places = await fetch_montgomery_open_data()
     all_places.extend(open_data_places)
+
+    # ── Source 3b: Montgomery Open Data — Parks ──
+    park_places = await fetch_montgomery_parks()
+    all_places.extend(park_places)
 
     # ── Source 4: Curated Montgomery Places (handpicked for passport) ──
     print("\n📋 Loading curated Montgomery places...")
