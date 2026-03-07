@@ -106,11 +106,13 @@ BRIGHT_DATA_TOKEN=your_bright_data_token
 
 ## 📍 Montgomery Places
 
-19 curated Montgomery venues across categories:
+**19 curated venues** available for stamp collection in the passport:
 - 🍽️ Restaurants — Central, Dreamland BBQ, Vintage Year, True Kitchen...
 - 🍸 Bars — Cahaba Brewing, Sky Bar Rooftop, Irish Bred Pub...
 - 🏛️ Attractions — Rosa Parks Museum, Legacy Museum, State Capitol, MLK Church...
 - 🏨 Hotels — Renaissance Montgomery, The Lattice...
+
+**290+ venues** indexed in ChromaDB — used by the AI Guide to answer questions about the wider Montgomery area.
 
 ---
 
