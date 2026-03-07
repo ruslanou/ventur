@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import "./App.css";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = "https://ventur-backend-30457736164.us-central1.run.app";
 const USER_ID = "demo_user";
 
 // ── API ──────────────────────────────────────────────────────────────────────
