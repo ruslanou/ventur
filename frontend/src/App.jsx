@@ -164,7 +164,7 @@ export default function Ventur() {
     const s = onboardSteps[onboardStep];
     return (
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: "#0a0a0a", fontFamily: "'Georgia', serif" }}>
-        <div style={{ width: 390, minHeight: 600, borderRadius: 40, boxShadow: "0 30px 80px rgba(0,0,0,0.8)", position: "relative", background: s.bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 40px 48px" }}>
+        <div style={{ width: 390, height: 780, borderRadius: 40, boxShadow: "0 30px 80px rgba(0,0,0,0.8)", position: "relative", background: s.bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 40px 48px" }}>
           <div style={{ position: "absolute", inset: 0, borderRadius: 40, background: "radial-gradient(circle at 20% 20%, rgba(255,255,255,0.05) 0%, transparent 50%)", pointerEvents: "none" }} />
           <div style={{ position: "absolute", top: 40, right: 40, width: 100, height: 100, borderRadius: "50%", border: "2px dashed rgba(255,255,255,0.1)", pointerEvents: "none" }} />
           <div style={{ position: "absolute", bottom: 100, left: 30, width: 70, height: 70, borderRadius: "50%", border: "2px dashed rgba(255,255,255,0.1)", pointerEvents: "none" }} />
