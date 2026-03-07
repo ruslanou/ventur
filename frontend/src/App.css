@@ -76,6 +76,18 @@
   border-radius: 4px;
 }
 
+/* ── Hide scrollbars globally ── */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* ── Filter chips row ── */
+.filter-chips {
+  scrollbar-width: none;
+}
+.filter-chips::-webkit-scrollbar { display: none; }
+
 /* ── Stamp button hover ── */
 .stamp-btn {
   transition: opacity 0.15s, transform 0.15s;

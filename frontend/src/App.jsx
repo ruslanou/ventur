@@ -91,6 +91,7 @@ export default function Ventur() {
   const [places, setPlaces] = useState([]);
   const [profile, setProfile] = useState(null);
   const [loadingPlaces, setLoadingPlaces] = useState(true);
+  const [exploreFilter, setExploreFilter] = useState("All");
   const chatBottomRef = useRef(null);
 
   useEffect(() => {
@@ -230,7 +231,7 @@ export default function Ventur() {
         </div>
 
         {/* CONTENT */}
-        <div style={{ flex: 1, overflow: activeTab === "chat" ? "hidden" : "auto", background: "#0f0f1a" }}>
+        <div className="no-scrollbar" style={{ flex: 1, overflow: activeTab === "chat" ? "hidden" : "auto", background: "#0f0f1a" }}>
 
           {activeTab === "passport" && (
             <div style={{ padding: "20px 20px 100px" }}>
@@ -263,14 +264,31 @@ export default function Ventur() {
           )}
 
           {activeTab === "explore" && (
-            <div style={{ padding: "20px 20px 100px" }}>
-              <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, letterSpacing: 3, textTransform: "uppercase", fontFamily: "monospace", marginBottom: 16 }}>Discover Montgomery</div>
-              {["Restaurant", "Bar", "Attraction", "Hotel"].map(cat => {
+            <div style={{ padding: "20px 0 100px" }}>
+              <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, letterSpacing: 3, textTransform: "uppercase", fontFamily: "monospace", marginBottom: 14, paddingLeft: 20 }}>Discover Montgomery</div>
+              {/* Filter chips */}
+              <div className="filter-chips" style={{ display: "flex", gap: 8, marginBottom: 20, overflowX: "auto", paddingLeft: 20, paddingRight: 20 }}>
+                {["All", "Restaurant", "Bar", "Attraction", "Hotel"].map(cat => {
+                  const active = exploreFilter === cat;
+                  return (
+                    <button key={cat} onClick={() => setExploreFilter(cat)} style={{ flexShrink: 0, background: active ? "#f59e0b" : "rgba(255,255,255,0.06)", border: active ? "none" : "1px solid rgba(255,255,255,0.1)", borderRadius: 20, padding: "6px 14px", color: active ? "#000" : "rgba(255,255,255,0.6)", fontSize: 12, fontWeight: active ? 700 : 400, cursor: "pointer", transition: "all 0.15s" }}>
+                      {cat}
+                    </button>
+                  );
+                })}
+              </div>
+              {/* Place list */}
+              {(exploreFilter === "All"
+                ? ["Restaurant", "Bar", "Attraction", "Hotel"]
+                : [exploreFilter]
+              ).map(cat => {
                 const catPlaces = places.filter(p => p.category === cat);
                 if (catPlaces.length === 0) return null;
                 return (
-                  <div key={cat} style={{ marginBottom: 24 }}>
-                    <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 11, letterSpacing: 2, fontFamily: "monospace", marginBottom: 12 }}>— {cat.toUpperCase()}S</div>
+                  <div key={cat} style={{ marginBottom: 24, paddingLeft: 20, paddingRight: 20 }}>
+                    {exploreFilter === "All" && (
+                      <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 11, letterSpacing: 2, fontFamily: "monospace", marginBottom: 12 }}>— {cat.toUpperCase()}S</div>
+                    )}
                     {catPlaces.map(place => (
                       <button key={place.id} onClick={() => setSelectedPlace(place)} style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: "14px 16px", marginBottom: 8, display: "flex", alignItems: "center", gap: 14, cursor: "pointer", textAlign: "left" }}>
                         <div style={{ width: 48, height: 48, borderRadius: 14, background: place.color + "22", overflow: "hidden", flexShrink: 0, position: "relative", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>
