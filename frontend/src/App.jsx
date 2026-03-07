@@ -277,8 +277,8 @@ export default function Ventur() {
                 </div>
               ) : (
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                  {places.map(place => (
-                    <button key={place.id} onClick={() => setSelectedPlace(place)} className="place-card" style={{ background: place.stamped ? `linear-gradient(135deg, ${place.color}22, ${place.color}11)` : "rgba(255,255,255,0.03)", border: `1px solid ${place.stamped ? place.color + "44" : "rgba(255,255,255,0.08)"}`, borderRadius: 20, padding: "16px 14px", cursor: "pointer", textAlign: "left", position: "relative", overflow: "hidden" }}>
+                  {places.map((place, idx) => (
+                    <button key={place.id} onClick={() => setSelectedPlace(place)} className="place-card" style={{ background: place.stamped ? `linear-gradient(135deg, ${place.color}22, ${place.color}11)` : "rgba(255,255,255,0.03)", border: `1px solid ${place.stamped ? place.color + "44" : "rgba(255,255,255,0.08)"}`, borderRadius: 20, padding: "16px 14px", cursor: "pointer", textAlign: "left", position: "relative", overflow: "hidden", gridColumn: idx === places.length - 1 && places.length % 2 !== 0 ? "1 / -1" : undefined }}>
                       {place.stamped && <div style={{ position: "absolute", top: -16, right: -16, width: 60, height: 60, borderRadius: "50%", border: `2px dashed ${place.color}55` }} />}
                       <div style={{ fontSize: 28, marginBottom: 8 }}>{place.emoji}</div>
                       <div style={{ color: place.stamped ? "#fff" : "rgba(255,255,255,0.5)", fontSize: 12, fontWeight: 700, marginBottom: 4, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{place.name}</div>
@@ -466,9 +466,9 @@ export default function Ventur() {
               {/* Mini passport emoji grid */}
               <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 24, padding: "16px", marginBottom: 20 }}>
                 <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, letterSpacing: 2, fontFamily: "monospace", marginBottom: 12 }}>PASSPORT COLLECTION</div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 8 }}>
                   {places.map(place => (
-                    <div key={place.id} title={place.name} style={{ width: 40, height: 40, borderRadius: 12, background: place.stamped ? place.color + "33" : "rgba(255,255,255,0.04)", border: `1px solid ${place.stamped ? place.color + "66" : "rgba(255,255,255,0.08)"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, opacity: place.stamped ? 1 : 0.3, transition: "all 0.3s" }}>
+                    <div key={place.id} title={place.name} style={{ aspectRatio: "1", borderRadius: 12, background: place.stamped ? place.color + "33" : "rgba(255,255,255,0.04)", border: `1px solid ${place.stamped ? place.color + "66" : "rgba(255,255,255,0.08)"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, opacity: place.stamped ? 1 : 0.3, transition: "all 0.3s" }}>
                       {place.emoji}
                     </div>
                   ))}
