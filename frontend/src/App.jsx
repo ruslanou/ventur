@@ -138,7 +138,10 @@ export default function Ventur() {
   const simulateScan = async (place) => {
     setScanning(true);
     try {
-      const result = await apiStamp(place.id);
+      const [result] = await Promise.all([
+        apiStamp(place.id),
+        new Promise(r => setTimeout(r, 3000)),
+      ]);
       setScanning(false);
       setPlaces(prev => prev.map(p => p.id === place.id ? { ...p, stamped: true } : p));
       if (result.success) {
@@ -460,13 +463,17 @@ export default function Ventur() {
                     <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 12, marginTop: 4 }}>You visited this place</div>
                   </div>
                 ) : scanning ? (
-                  <div style={{ background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.3)", borderRadius: 18, padding: "20px", textAlign: "center" }}>
-                    <div style={{ position: "relative", display: "inline-flex", alignItems: "center", justifyContent: "center", width: 60, height: 60, marginBottom: 8 }}>
-                      <span style={{ fontSize: 36 }}>📷</span>
-                      <div className="scan-ring" />
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, padding: "8px 0" }}>
+                    <div className="qr-scanner">
+                      <div className="qr-grid" />
+                      <div className="qr-corner qr-corner-tl" />
+                      <div className="qr-corner qr-corner-tr" />
+                      <div className="qr-corner qr-corner-bl" />
+                      <div className="qr-corner qr-corner-br" />
+                      <div className="qr-scanline" />
                     </div>
-                    <div style={{ color: "#f59e0b", fontSize: 14, fontWeight: 700 }}>Scanning QR Code...</div>
-                    <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 12, marginTop: 4 }}>Hold steady!</div>
+                    <div style={{ color: "#f59e0b", fontSize: 14, fontWeight: 700, letterSpacing: 1 }}>Scanning QR Code...</div>
+                    <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 12 }}>Hold steady!</div>
                   </div>
                 ) : (
                   <button className="stamp-btn" onClick={() => simulateScan(selectedPlace)} style={{ width: "100%", background: `linear-gradient(135deg, ${selectedPlace.color}, ${selectedPlace.color}99)`, border: "none", borderRadius: 18, padding: "18px", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", letterSpacing: 1 }}>

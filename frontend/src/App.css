@@ -31,18 +31,49 @@
   animation: toast-in 0.3s ease-out forwards;
 }
 
-/* ── Scan pulse ring ── */
-@keyframes scan-ring {
-  0%   { transform: scale(0.85); opacity: 0.8; }
-  100% { transform: scale(1.5);  opacity: 0; }
+/* ── QR Scanner viewfinder ── */
+@keyframes scanline {
+  0%   { top: 4%; }
+  50%  { top: 82%; }
+  100% { top: 4%; }
 }
 
-.scan-ring {
+.qr-scanner {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  background: rgba(0, 0, 0, 0.65);
+  border-radius: 12px;
+  overflow: hidden;
+  margin: 0 auto;
+}
+
+.qr-corner {
   position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  border: 2px solid #f59e0b;
-  animation: scan-ring 1.2s ease-out infinite;
+  width: 22px;
+  height: 22px;
+}
+.qr-corner-tl { top: 0; left: 0; border-top: 3px solid #f59e0b; border-left: 3px solid #f59e0b; border-radius: 2px 0 0 0; }
+.qr-corner-tr { top: 0; right: 0; border-top: 3px solid #f59e0b; border-right: 3px solid #f59e0b; border-radius: 0 2px 0 0; }
+.qr-corner-bl { bottom: 0; left: 0; border-bottom: 3px solid #f59e0b; border-left: 3px solid #f59e0b; border-radius: 0 0 0 2px; }
+.qr-corner-br { bottom: 0; right: 0; border-bottom: 3px solid #f59e0b; border-right: 3px solid #f59e0b; border-radius: 0 0 2px 0; }
+
+.qr-scanline {
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #f59e0b, #fbbf24, #f59e0b, transparent);
+  box-shadow: 0 0 8px 2px rgba(245, 158, 11, 0.6);
+  animation: scanline 1.8s ease-in-out infinite;
+}
+
+.qr-grid {
+  position: absolute;
+  inset: 14px;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px);
+  background-size: 12px 12px;
+  border-radius: 4px;
 }
 
 /* ── Stamp button hover ── */
