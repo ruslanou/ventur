@@ -237,7 +237,16 @@ export default function Ventur() {
             <div style={{ padding: "20px 20px 100px" }}>
               <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, letterSpacing: 3, textTransform: "uppercase", fontFamily: "monospace", marginBottom: 16 }}>Your Passport Book</div>
               {loadingPlaces ? (
-                <div style={{ textAlign: "center", color: "rgba(255,255,255,0.4)", padding: "40px 0", fontFamily: "monospace" }}>Loading places...</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: "16px 14px" }}>
+                      <div className="skeleton" style={{ width: 36, height: 36, borderRadius: 10, marginBottom: 12 }} />
+                      <div className="skeleton" style={{ width: "80%", height: 12, marginBottom: 8 }} />
+                      <div className="skeleton" style={{ width: "50%", height: 10, marginBottom: 14 }} />
+                      <div className="skeleton" style={{ width: "60%", height: 22, borderRadius: 10 }} />
+                    </div>
+                  ))}
+                </div>
               ) : (
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                   {places.map(place => (
@@ -389,11 +398,50 @@ export default function Ventur() {
                 <div style={{ color: "#fff", fontSize: 28, fontWeight: 700 }}>{currentLevel.name}</div>
                 <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 13, marginTop: 4 }}>{totalPoints} total points</div>
               </div>
+              {/* Stamp progress ring */}
+              {(() => {
+                const total = places.length || 1;
+                const r = 54;
+                const circ = 2 * Math.PI * r;
+                const offset = circ * (1 - stampsCollected / total);
+                return (
+                  <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 24, padding: "24px 16px", marginBottom: 12, display: "flex", alignItems: "center", gap: 20 }}>
+                    <svg width={130} height={130} style={{ flexShrink: 0 }}>
+                      <circle cx={65} cy={65} r={r} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth={10} />
+                      <circle cx={65} cy={65} r={r} fill="none" stroke={currentLevel.color} strokeWidth={10}
+                        strokeDasharray={circ} strokeDashoffset={offset}
+                        strokeLinecap="round"
+                        transform="rotate(-90 65 65)"
+                        style={{ transition: "stroke-dashoffset 0.8s ease" }}
+                      />
+                      <text x={65} y={60} textAnchor="middle" fill="#fff" fontSize={26} fontWeight={700} fontFamily="monospace">{stampsCollected}</text>
+                      <text x={65} y={78} textAnchor="middle" fill="rgba(255,255,255,0.35)" fontSize={11} fontFamily="monospace">of {places.length}</text>
+                    </svg>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, letterSpacing: 2, fontFamily: "monospace", marginBottom: 6 }}>STAMPS COLLECTED</div>
+                      <div style={{ color: "#fff", fontSize: 22, fontWeight: 700, marginBottom: 4 }}>{stampsCollected} <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 14, fontWeight: 400 }}>/ {places.length}</span></div>
+                      <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 12 }}>{places.length - stampsCollected} left to explore</div>
+                      <div style={{ marginTop: 10, height: 4, background: "rgba(255,255,255,0.08)", borderRadius: 2, overflow: "hidden" }}>
+                        <div style={{ height: "100%", width: `${(stampsCollected / (places.length || 1)) * 100}%`, background: currentLevel.color, borderRadius: 2, transition: "width 0.8s ease" }} />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+              {/* Mini passport emoji grid */}
+              <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 24, padding: "16px", marginBottom: 20 }}>
+                <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, letterSpacing: 2, fontFamily: "monospace", marginBottom: 12 }}>PASSPORT COLLECTION</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {places.map(place => (
+                    <div key={place.id} title={place.name} style={{ width: 40, height: 40, borderRadius: 12, background: place.stamped ? place.color + "33" : "rgba(255,255,255,0.04)", border: `1px solid ${place.stamped ? place.color + "66" : "rgba(255,255,255,0.08)"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, opacity: place.stamped ? 1 : 0.3, transition: "all 0.3s" }}>
+                      {place.emoji}
+                    </div>
+                  ))}
+                </div>
+              </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
                 {[
-                  { label: "Stamps", value: stampsCollected, icon: "📖" },
                   { label: "Points", value: totalPoints, icon: "⭐" },
-                  { label: "Remaining", value: (profile?.stamps_available ?? places.length) - stampsCollected, icon: "🎯" },
                   { label: "Rank", value: currentLevel.name, icon: "👑" },
                 ].map((stat, i) => (
                   <div key={i} style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: "16px", textAlign: "center" }}>
@@ -452,7 +500,7 @@ export default function Ventur() {
           <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "flex-end", zIndex: 50 }} onClick={() => setSelectedPlace(null)}>
             <div style={{ width: "100%", background: GH.modalBg, borderRadius: "28px 28px 0 0", overflow: "hidden", boxShadow: "0 -8px 40px rgba(0,0,0,0.5)" }} onClick={e => e.stopPropagation()}>
               {/* Photo hero */}
-              <div style={{ position: "relative", height: 180, overflow: "hidden", background: selectedPlace.color + "33", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 64 }}>
+              <div style={{ position: "relative", height: 260, overflow: "hidden", background: selectedPlace.color + "33", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 64 }}>
                 <span style={{ position: "relative", zIndex: 0 }}>{selectedPlace.emoji}</span>
                 <img
                   src={`${API_BASE}/place-photo/${selectedPlace.id}?maxwidth=600`}
