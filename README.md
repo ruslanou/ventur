@@ -116,11 +116,23 @@ BRIGHT_DATA_TOKEN=your_bright_data_token
 
 ---
 
-## 📱 Install as App
+## 📱 Install as App (Recommended)
 
-1. Open the live URL in Chrome on your phone
-2. Tap **Menu → Add to Home screen**
-3. Opens fullscreen like a native app
+> **Ventur is designed to be used as a PWA (Progressive Web App) — install it for the best experience.**
+
+### iPhone (Safari)
+1. Open [ventur-app.vercel.app](https://ventur-app.vercel.app) in **Safari**
+2. Tap the **Share** button (box with arrow at the bottom)
+3. Tap **"Add to Home Screen"**
+4. Tap **Add** — Ventur now appears on your home screen like a native app
+
+### Android (Chrome)
+1. Open [ventur-app.vercel.app](https://ventur-app.vercel.app) in **Chrome**
+2. Tap the **three-dot menu** (top right)
+3. Tap **"Add to Home screen"**
+4. Tap **Add** — done!
+
+> ⚠️ Testing in a browser tab will work but the experience is optimized for fullscreen PWA mode.
 
 ---
 
