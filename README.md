@@ -2,7 +2,9 @@
 
 > Explore Montgomery. Collect Stamps. Level Up. Win Rewards.
 
-Ventur is a gamified city exploration passport app for **Montgomery, Alabama**. Users discover local restaurants, bars, and attractions by collecting digital stamps — powered by AI recommendations and real-time city data.
+Ventur is a gamified city exploration passport app for **Montgomery, Alabama**. Users discover local restaurants, bars, and attractions by collecting digital stamps — powered by AI recommendations and real city data.
+
+**Live App:** [frontend-navy-xi-18.vercel.app](https://frontend-navy-xi-18.vercel.app)
 
 ---
 
@@ -11,8 +13,9 @@ Ventur is a gamified city exploration passport app for **Montgomery, Alabama**. 
 - 📖 **Digital Passport** — Collect stamps at local venues by scanning QR codes
 - 🤖 **AI City Guide** — Gemini-powered chat recommends the best places to visit
 - 🏆 **Gamified Levels** — Explorer → Adventurer → Pathfinder → Legend
-- 🗺️ **Real City Data** — Powered by Google Places API, Bright Data MCP, and Montgomery Open Data
+- 🗺️ **Real City Data** — Powered by Google Places API with real photos
 - 🎁 **Rewards** — Earn points and unlock exclusive offers from local businesses
+- 📱 **PWA** — Installable as a native app on any phone
 
 ---
 
@@ -20,12 +23,13 @@ Ventur is a gamified city exploration passport app for **Montgomery, Alabama**. 
 
 | Layer | Technology |
 |---|---|
-| Frontend | React |
+| Frontend | React + Vite (PWA) |
 | Backend | FastAPI (Python 3.11) |
 | AI Model | Google Gemini 2.5 Flash Lite |
-| Vector Database | ChromaDB |
+| Vector Database | ChromaDB (RAG) |
 | Live Web Data | Bright Data MCP |
-| Deployment | Google Cloud Run + Vercel |
+| Backend Deploy | Google Cloud Run |
+| Frontend Deploy | Vercel |
 
 ---
 
@@ -35,45 +39,41 @@ Ventur is a gamified city exploration passport app for **Montgomery, Alabama**. 
 - Python 3.11
 - Node.js 18+
 
-### Backend Setup
+### Backend
 
 ```bash
-# Clone the repo
 git clone https://github.com/ruslanou/ventur.git
 cd ventur/backend
 
-# Create virtual environment
 python3.11 -m venv venv
-source venv/bin/activate  # Mac/Linux
+source venv/bin/activate
 
-# Install dependencies
 pip install -r requirements.txt
 
-# Set up environment variables
+# Add API keys
 cp .env.example .env
-# Add your API keys to .env
 
-# Run the server
+# Load Montgomery data into ChromaDB
+python load_data.py
+
+# Start server
 uvicorn main:app --reload
+```
+
+### Frontend
+
+```bash
+cd ventur/frontend
+npm install
+npm run dev
 ```
 
 ### Environment Variables
 
-Create a `.env` file with:
 ```
 GEMINI_API_KEY=your_gemini_api_key
 GOOGLE_PLACES_API_KEY=your_google_places_key
 BRIGHT_DATA_TOKEN=your_bright_data_token
-```
-
-### Load Montgomery Data into ChromaDB
-
-```bash
-# Fetch real data from all sources
-python fetch_data.py
-
-# Or load hardcoded places (fallback)
-python load_data.py
 ```
 
 ---
@@ -83,30 +83,13 @@ python load_data.py
 | Method | Endpoint | Description |
 |---|---|---|
 | GET | `/` | Health check |
-| GET | `/test-gemini` | Test Gemini connection |
 | POST | `/chat` | AI city guide chat (RAG-powered) |
-| GET | `/places` | All places (optional `?category=` filter) |
+| GET | `/places` | All places (`?category=` filter) |
 | GET | `/places/{place_id}` | Single place details |
-| POST | `/stamp` | Collect a stamp at a place |
+| POST | `/stamp` | Collect a stamp |
 | GET | `/profile/{user_id}` | User level, points, and stamps |
-| GET | `/place-photo/{place_id}` | Proxied Google Places photo |
+| GET | `/place-photo/{place_id}` | Google Places photo proxy |
 | GET | `/docs` | Swagger UI |
-
-### Example Requests
-```bash
-# AI chat
-curl -X POST http://localhost:8000/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message": "What are the best restaurants in Montgomery?"}'
-
-# Collect a stamp
-curl -X POST http://localhost:8000/stamp \
-  -H "Content-Type: application/json" \
-  -d '{"place_id": "rest_001", "user_id": "demo_user"}'
-
-# Get user profile
-curl http://localhost:8000/profile/demo_user
-```
 
 ---
 
@@ -123,20 +106,28 @@ curl http://localhost:8000/profile/demo_user
 
 ## 📍 Montgomery Places
 
-Ventur features 290+ real Montgomery venues across categories:
-- 🍽️ Restaurants (Central Restaurant, Dreamland BBQ, Vintage Year...)
-- 🍸 Bars (Cahaba Brewing Co., Sky Bar Rooftop, Irish Bred Pub...)
-- 🏛️ Attractions (Rosa Parks Museum, Legacy Museum, State Capitol...)
-- 🏨 Hotels (Renaissance Montgomery, The Lattice...)
+19 curated Montgomery venues across categories:
+- 🍽️ Restaurants — Central, Dreamland BBQ, Vintage Year, True Kitchen...
+- 🍸 Bars — Cahaba Brewing, Sky Bar Rooftop, Irish Bred Pub...
+- 🏛️ Attractions — Rosa Parks Museum, Legacy Museum, State Capitol, MLK Church...
+- 🏨 Hotels — Renaissance Montgomery, The Lattice...
+
+---
+
+## 📱 Install as App
+
+1. Open the live URL in Chrome on your phone
+2. Tap **Menu → Add to Home screen**
+3. Opens fullscreen like a native app
 
 ---
 
 ## 🏆 Built For
 
-This project was built for a hackathon — March 2026.
+Hackathon — March 2026
 
 ---
 
 ## 📄 License
 
-MIT License — see [LICENSE](LICENSE) for details.
+MIT — see [LICENSE](LICENSE)
