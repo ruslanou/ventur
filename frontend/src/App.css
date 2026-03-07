@@ -76,6 +76,22 @@
   border-radius: 4px;
 }
 
+/* ── Confetti ── */
+@keyframes confetti-fall {
+  0%   { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(0.4); opacity: 0; }
+}
+
+.confetti-piece {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  animation: confetti-fall 0.9s ease-out forwards;
+  pointer-events: none;
+  z-index: 100;
+}
+
 /* ── Skeleton shimmer ── */
 @keyframes shimmer {
   0%   { background-position: -400px 0; }
@@ -103,13 +119,20 @@
 
 /* ── Stamp button hover ── */
 .stamp-btn {
-  transition: opacity 0.15s, transform 0.15s;
+  transition: opacity 0.1s, transform 0.1s;
 }
 .stamp-btn:hover  { opacity: 0.9; transform: scale(1.02); }
-.stamp-btn:active { opacity: 0.8; transform: scale(0.98); }
+.stamp-btn:active { opacity: 0.75; transform: scale(0.93); }
 
 /* ── Place card hover ── */
 .place-card {
   transition: transform 0.15s, box-shadow 0.15s;
 }
-.place-card:hover { transform: translateY(-2px); }
+.place-card:hover  { transform: translateY(-2px); }
+.place-card:active { transform: scale(0.96); }
+
+/* ── Filter chip press ── */
+.filter-chip {
+  transition: all 0.1s;
+}
+.filter-chip:active { transform: scale(0.93); opacity: 0.8; }

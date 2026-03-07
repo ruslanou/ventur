@@ -92,6 +92,7 @@ export default function Ventur() {
   const [profile, setProfile] = useState(null);
   const [loadingPlaces, setLoadingPlaces] = useState(true);
   const [exploreFilter, setExploreFilter] = useState("All");
+  const [confetti, setConfetti] = useState([]);
   const chatBottomRef = useRef(null);
 
   useEffect(() => {
@@ -148,6 +149,18 @@ export default function Ventur() {
       if (result.success) {
         setJustStamped({ ...place, points: result.points_earned });
         apiFetchProfile().then(setProfile);
+        const pieces = Array.from({ length: 24 }, (_, i) => ({
+          id: i,
+          color: ["#f59e0b", "#10b981", "#3b82f6", "#ef4444", "#8b5cf6", "#fbbf24"][i % 6],
+          dx: `${(Math.random() - 0.5) * 260}px`,
+          dy: `${-(Math.random() * 180 + 60)}px`,
+          rot: `${(Math.random() - 0.5) * 720}deg`,
+          left: `${38 + Math.random() * 24}%`,
+          top: `${40 + Math.random() * 20}%`,
+          shape: Math.random() > 0.5 ? "50%" : "2px",
+        }));
+        setConfetti(pieces);
+        setTimeout(() => setConfetti([]), 1000);
       } else {
         setJustStamped({ ...place, points: 0, alreadyStamped: true });
       }
@@ -205,6 +218,11 @@ export default function Ventur() {
             </div>
           </div>
         )}
+
+        {/* CONFETTI */}
+        {confetti.map(p => (
+          <div key={p.id} className="confetti-piece" style={{ background: p.color, left: p.left, top: p.top, borderRadius: p.shape, "--dx": p.dx, "--dy": p.dy, "--rot": p.rot }} />
+        ))}
 
         {/* HEADER */}
         <div style={{ background: "linear-gradient(135deg, #1a1a2e, #16213e)", padding: "44px 24px 20px", position: "relative", overflow: "hidden" }}>
@@ -280,13 +298,20 @@ export default function Ventur() {
                 {["All", "Restaurant", "Bar", "Attraction", "Hotel"].map(cat => {
                   const active = exploreFilter === cat;
                   return (
-                    <button key={cat} onClick={() => setExploreFilter(cat)} style={{ flexShrink: 0, background: active ? "#f59e0b" : "rgba(255,255,255,0.06)", border: active ? "none" : "1px solid rgba(255,255,255,0.1)", borderRadius: 20, padding: "6px 14px", color: active ? "#000" : "rgba(255,255,255,0.6)", fontSize: 12, fontWeight: active ? 700 : 400, cursor: "pointer", transition: "all 0.15s" }}>
+                    <button key={cat} onClick={() => setExploreFilter(cat)} className="filter-chip" style={{ flexShrink: 0, background: active ? "#f59e0b" : "rgba(255,255,255,0.06)", border: active ? "none" : "1px solid rgba(255,255,255,0.1)", borderRadius: 20, padding: "6px 14px", color: active ? "#000" : "rgba(255,255,255,0.6)", fontSize: 12, fontWeight: active ? 700 : 400, cursor: "pointer" }}>
                       {cat}
                     </button>
                   );
                 })}
               </div>
               {/* Place list */}
+              {exploreFilter !== "All" && places.filter(p => p.category === exploreFilter).length === 0 && (
+                <div style={{ textAlign: "center", padding: "60px 20px" }}>
+                  <div style={{ fontSize: 48, marginBottom: 12 }}>🗺️</div>
+                  <div style={{ color: "#fff", fontSize: 15, fontWeight: 700, marginBottom: 6 }}>No {exploreFilter}s yet</div>
+                  <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 13 }}>Check back soon — more spots coming!</div>
+                </div>
+              )}
               {(exploreFilter === "All"
                 ? ["Restaurant", "Bar", "Attraction", "Hotel"]
                 : [exploreFilter]
