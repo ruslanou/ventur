@@ -15,7 +15,7 @@ Ventur is a gamified city exploration passport app for **Montgomery, Alabama**. 
 - 🏆 **Gamified Levels** — Explorer → Adventurer → Pathfinder → Legend
 - 🗺️ **Real City Data** — Powered by Google Places API with real photos
 - 🎁 **Rewards** — Earn points and unlock exclusive offers from local businesses
-- 📱 **PWA** — Installable as a native app on any phone
+- 📱 **PWA** — Installable as a native app on any phone, with offline support and service worker caching
 
 ---
 
@@ -23,7 +23,7 @@ Ventur is a gamified city exploration passport app for **Montgomery, Alabama**. 
 
 | Layer | Technology |
 |---|---|
-| Frontend | React + Vite (PWA) |
+| Frontend | React + Vite (PWA with vite-plugin-pwa) |
 | Backend | FastAPI (Python 3.11) |
 | AI Model | Google Gemini 2.5 Flash Lite |
 | Vector Database | ChromaDB (RAG) |
@@ -118,7 +118,7 @@ BRIGHT_DATA_TOKEN=your_bright_data_token
 
 ## 📱 Install as App (Recommended)
 
-> **Ventur is designed to be used as a PWA (Progressive Web App) — install it for the best experience.**
+> **Ventur is a Progressive Web App (PWA) with a real service worker — install it for the best experience, including offline support.**
 
 ### iPhone (Safari)
 1. Open [ventur-app.vercel.app](https://ventur-app.vercel.app) in **Safari**
@@ -128,9 +128,8 @@ BRIGHT_DATA_TOKEN=your_bright_data_token
 
 ### Android (Chrome)
 1. Open [ventur-app.vercel.app](https://ventur-app.vercel.app) in **Chrome**
-2. Tap the **three-dot menu** (top right)
-3. Tap **"Add to Home screen"**
-4. Tap **Add** — done!
+2. Tap the **Install** banner that appears, or tap the **three-dot menu** → **"Install app"**
+3. Tap **Install** — done!
 
 > ⚠️ Testing in a browser tab will work but the experience is optimized for fullscreen PWA mode.
 
