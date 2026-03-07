@@ -1,42 +1,59 @@
+* { box-sizing: border-box; }
+
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  margin: 0;
+  padding: 0;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* ── Typing dots ── */
+@keyframes dot-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-5px); opacity: 1; }
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.typing-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  animation: dot-bounce 1.2s infinite ease-in-out;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+/* ── Toast ── */
+@keyframes toast-in {
+  from { transform: translateY(-16px); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.toast-banner {
+  animation: toast-in 0.3s ease-out forwards;
 }
 
-.card {
-  padding: 2em;
+/* ── Scan pulse ring ── */
+@keyframes scan-ring {
+  0%   { transform: scale(0.85); opacity: 0.8; }
+  100% { transform: scale(1.5);  opacity: 0; }
 }
 
-.read-the-docs {
-  color: #888;
+.scan-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid #f59e0b;
+  animation: scan-ring 1.2s ease-out infinite;
 }
+
+/* ── Stamp button hover ── */
+.stamp-btn {
+  transition: opacity 0.15s, transform 0.15s;
+}
+.stamp-btn:hover  { opacity: 0.9; transform: scale(1.02); }
+.stamp-btn:active { opacity: 0.8; transform: scale(0.98); }
+
+/* ── Place card hover ── */
+.place-card {
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.place-card:hover { transform: translateY(-2px); }

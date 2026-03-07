@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import "./App.css";
 
 const API_BASE = "http://localhost:8000";
 const USER_ID = "demo_user";
@@ -192,7 +193,7 @@ export default function Ventur() {
       <div style={{ width: 390, height: 780, borderRadius: 40, overflow: "hidden", boxShadow: "0 30px 80px rgba(0,0,0,0.8)", display: "flex", flexDirection: "column", background: GH.bg, position: "relative" }}>
 
         {justStamped && (
-          <div style={{ position: "absolute", top: 20, left: 20, right: 20, background: justStamped.alreadyStamped ? "linear-gradient(135deg, #374151, #1f2937)" : "linear-gradient(135deg, #10b981, #059669)", borderRadius: 16, padding: "16px 20px", zIndex: 100, display: "flex", alignItems: "center", gap: 12, boxShadow: "0 10px 30px rgba(16,185,129,0.4)" }}>
+          <div className="toast-banner" style={{ position: "absolute", top: 20, left: 20, right: 20, background: justStamped.alreadyStamped ? "linear-gradient(135deg, #374151, #1f2937)" : "linear-gradient(135deg, #10b981, #059669)", borderRadius: 16, padding: "16px 20px", zIndex: 100, display: "flex", alignItems: "center", gap: 12, boxShadow: "0 10px 30px rgba(16,185,129,0.4)" }}>
             <span style={{ fontSize: 30 }}>{justStamped.alreadyStamped ? "📖" : "🎉"}</span>
             <div>
               <div style={{ color: "#fff", fontWeight: 700, fontSize: 14 }}>{justStamped.alreadyStamped ? "Already Stamped!" : "Stamp Collected!"}</div>
@@ -216,7 +217,7 @@ export default function Ventur() {
           </div>
           <div style={{ marginTop: 16 }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-              <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontFamily: "monospace" }}>{stampsCollected} stamps collected</span>
+              <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontFamily: "monospace" }}>{stampsCollected}/{places.length} stamps</span>
               {nextLevel && <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontFamily: "monospace" }}>{nextLevel.name} at {nextLevel.min}pts</span>}
             </div>
             <div style={{ height: 6, background: "rgba(255,255,255,0.1)", borderRadius: 3, overflow: "hidden" }}>
@@ -226,7 +227,7 @@ export default function Ventur() {
         </div>
 
         {/* CONTENT */}
-        <div style={{ flex: 1, overflowY: "auto", background: "#0f0f1a" }}>
+        <div style={{ flex: 1, overflow: activeTab === "chat" ? "hidden" : "auto", background: "#0f0f1a" }}>
 
           {activeTab === "passport" && (
             <div style={{ padding: "20px 20px 100px" }}>
@@ -236,10 +237,10 @@ export default function Ventur() {
               ) : (
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                   {places.map(place => (
-                    <button key={place.id} onClick={() => setSelectedPlace(place)} style={{ background: place.stamped ? `linear-gradient(135deg, ${place.color}22, ${place.color}11)` : "rgba(255,255,255,0.03)", border: `1px solid ${place.stamped ? place.color + "44" : "rgba(255,255,255,0.08)"}`, borderRadius: 20, padding: "16px 14px", cursor: "pointer", textAlign: "left", position: "relative", overflow: "hidden" }}>
+                    <button key={place.id} onClick={() => setSelectedPlace(place)} className="place-card" style={{ background: place.stamped ? `linear-gradient(135deg, ${place.color}22, ${place.color}11)` : "rgba(255,255,255,0.03)", border: `1px solid ${place.stamped ? place.color + "44" : "rgba(255,255,255,0.08)"}`, borderRadius: 20, padding: "16px 14px", cursor: "pointer", textAlign: "left", position: "relative", overflow: "hidden" }}>
                       {place.stamped && <div style={{ position: "absolute", top: -16, right: -16, width: 60, height: 60, borderRadius: "50%", border: `2px dashed ${place.color}55` }} />}
                       <div style={{ fontSize: 28, marginBottom: 8 }}>{place.emoji}</div>
-                      <div style={{ color: place.stamped ? "#fff" : "rgba(255,255,255,0.5)", fontSize: 12, fontWeight: 700, marginBottom: 4, lineHeight: 1.3 }}>{place.name}</div>
+                      <div style={{ color: place.stamped ? "#fff" : "rgba(255,255,255,0.5)", fontSize: 12, fontWeight: 700, marginBottom: 4, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{place.name}</div>
                       <div style={{ color: place.stamped ? place.color : "rgba(255,255,255,0.25)", fontSize: 10, fontFamily: "monospace", letterSpacing: 1 }}>{place.category.toUpperCase()}</div>
                       {place.stamped ? (
                         <div style={{ marginTop: 10, display: "inline-flex", alignItems: "center", gap: 4, background: place.color + "22", borderRadius: 10, padding: "4px 10px" }}>
@@ -269,11 +270,12 @@ export default function Ventur() {
                     <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 11, letterSpacing: 2, fontFamily: "monospace", marginBottom: 12 }}>— {cat.toUpperCase()}S</div>
                     {catPlaces.map(place => (
                       <button key={place.id} onClick={() => setSelectedPlace(place)} style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: "14px 16px", marginBottom: 8, display: "flex", alignItems: "center", gap: 14, cursor: "pointer", textAlign: "left" }}>
-                        <div style={{ width: 48, height: 48, borderRadius: 14, background: place.color + "22", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>
+                        <div style={{ width: 48, height: 48, borderRadius: 14, background: place.color + "22", overflow: "hidden", flexShrink: 0, position: "relative", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>
+                          <span style={{ position: "absolute" }}>{place.emoji}</span>
                           <img
                             src={`http://localhost:8000/place-photo/${place.id}?maxwidth=200`}
                             alt={place.name}
-                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                            style={{ width: "100%", height: "100%", objectFit: "cover", position: "relative", zIndex: 1 }}
                             onError={e => { e.target.style.display = "none"; }}
                           />
                         </div>
@@ -294,16 +296,28 @@ export default function Ventur() {
 
           {activeTab === "chat" && (
             <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-              <div style={{ padding: "16px 20px 8px" }}>
-                <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, letterSpacing: 3, textTransform: "uppercase", fontFamily: "monospace" }}>AI City Guide</div>
+              {/* Chat header */}
+              <div style={{ padding: "14px 20px 10px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg, #f59e0b, #ef4444)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>✈️</div>
+                <div>
+                  <div style={{ color: "#fff", fontSize: 13, fontWeight: 700 }}>Ventur AI Guide</div>
+                  <div style={{ color: "#10b981", fontSize: 10, fontFamily: "monospace", display: "flex", alignItems: "center", gap: 4 }}>
+                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981", display: "inline-block" }} />
+                    Online — powered by Gemini
+                  </div>
+                </div>
               </div>
-              <div style={{ flex: 1, padding: "8px 20px", overflowY: "auto", display: "flex", flexDirection: "column", gap: 12 }}>
+
+              {/* Messages */}
+              <div style={{ flex: 1, padding: "16px 16px 8px", overflowY: "auto", display: "flex", flexDirection: "column", gap: 14 }}>
                 {messages.map((msg, i) => (
                   <div key={i} style={{ display: "flex", justifyContent: msg.from === "user" ? "flex-end" : "flex-start", gap: 8, alignItems: "flex-end" }}>
-                    {msg.from === "bot" && <div style={{ width: 28, height: 28, borderRadius: "50%", background: "linear-gradient(135deg, #f59e0b, #ef4444)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, flexShrink: 0 }}>✈️</div>}
-                    <div style={{ maxWidth: "78%", background: msg.from === "user" ? "linear-gradient(135deg, #533483, #e94560)" : "rgba(255,255,255,0.06)", borderRadius: msg.from === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px", padding: "10px 14px" }}>
+                    {msg.from === "bot" && (
+                      <div style={{ width: 28, height: 28, borderRadius: "50%", background: "linear-gradient(135deg, #f59e0b, #ef4444)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, flexShrink: 0 }}>✈️</div>
+                    )}
+                    <div style={{ maxWidth: "78%", background: msg.from === "user" ? "linear-gradient(135deg, #533483, #e94560)" : "rgba(255,255,255,0.07)", borderRadius: msg.from === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px", padding: "11px 15px", border: msg.from === "bot" ? "1px solid rgba(255,255,255,0.06)" : "none" }}>
                       {msg.text.split("\n").map((line, j) => (
-                        <p key={j} style={{ margin: "2px 0", color: "#fff", fontSize: 13, lineHeight: 1.5 }}>{line}</p>
+                        <p key={j} style={{ margin: "2px 0", color: "#fff", fontSize: 13, lineHeight: 1.55 }}>{line || " "}</p>
                       ))}
                     </div>
                   </div>
@@ -311,23 +325,36 @@ export default function Ventur() {
                 {isTyping && (
                   <div style={{ display: "flex", gap: 8, alignItems: "flex-end" }}>
                     <div style={{ width: 28, height: 28, borderRadius: "50%", background: "linear-gradient(135deg, #f59e0b, #ef4444)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>✈️</div>
-                    <div style={{ background: "rgba(255,255,255,0.06)", borderRadius: "18px 18px 18px 4px", padding: "14px 18px" }}>
+                    <div style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "18px 18px 18px 4px", padding: "14px 18px" }}>
                       <div style={{ display: "flex", gap: 4 }}>
-                        {[0,1,2].map(i => <div key={i} style={{ width: 5, height: 5, borderRadius: "50%", background: "rgba(255,255,255,0.4)" }} />)}
+                        {[0,1,2].map(i => <div key={i} className="typing-dot" />)}
                       </div>
                     </div>
                   </div>
                 )}
                 <div ref={chatBottomRef} />
               </div>
-              <div style={{ padding: "8px 16px", display: "flex", gap: 8, overflowX: "auto" }}>
-                {["Best bars", "Top restaurants", "Must-see attractions"].map((q, i) => (
-                  <button key={i} onClick={() => sendMessage(q)} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 20, padding: "6px 14px", color: "rgba(255,255,255,0.7)", fontSize: 11, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "monospace" }}>{q}</button>
+
+              {/* Quick suggestions */}
+              <div style={{ padding: "8px 16px 6px", display: "flex", gap: 8, overflowX: "auto", flexShrink: 0 }}>
+                {["Best bars 🍺", "Top restaurants 🍽️", "Must-see attractions 🏛️", "Hidden gems ✨"].map((q, i) => (
+                  <button key={i} onClick={() => sendMessage(q.replace(/ [🀀-🿿]|[☀-⟿]/gu, "").trim())} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 20, padding: "7px 14px", color: "rgba(255,255,255,0.75)", fontSize: 11, cursor: "pointer", whiteSpace: "nowrap", fontFamily: "monospace", flexShrink: 0 }}>{q}</button>
                 ))}
               </div>
-              <div style={{ padding: "10px 16px 20px", display: "flex", gap: 10 }}>
-                <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendMessage()} placeholder="Ask about places to explore..." style={{ flex: 1, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 24, padding: "12px 18px", color: "#fff", fontSize: 13, outline: "none", fontFamily: "Georgia, serif" }} />
-                <button onClick={() => sendMessage()} style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg, #f59e0b, #ef4444)", border: "none", color: "#fff", fontSize: 16, cursor: "pointer" }}>➤</button>
+
+              {/* Input bar */}
+              <div style={{ padding: "8px 16px 96px", display: "flex", gap: 10, alignItems: "center", flexShrink: 0 }}>
+                <input
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && sendMessage()}
+                  placeholder="Ask about places to explore..."
+                  style={{ flex: 1, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 24, padding: "13px 20px", color: "#fff", fontSize: 13, outline: "none", fontFamily: "Georgia, serif" }}
+                />
+                <button
+                  onClick={() => sendMessage()}
+                  disabled={!input.trim() || isTyping}
+                  style={{ width: 44, height: 44, borderRadius: "50%", background: input.trim() && !isTyping ? "linear-gradient(135deg, #f59e0b, #ef4444)" : "rgba(255,255,255,0.08)", border: "none", color: "#fff", fontSize: 16, cursor: input.trim() && !isTyping ? "pointer" : "default", transition: "background 0.2s", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>➤</button>
               </div>
             </div>
           )}
@@ -385,7 +412,7 @@ export default function Ventur() {
         </div>
 
         {/* BOTTOM NAV */}
-        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "rgba(15,15,26,0.95)", backdropFilter: "blur(20px)", borderTop: "1px solid rgba(255,255,255,0.06)", padding: "12px 0 24px", display: "flex", justifyContent: "space-around" }}>
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 20, background: "rgba(15,15,26,0.95)", backdropFilter: "blur(20px)", borderTop: "1px solid rgba(255,255,255,0.06)", padding: "12px 0 24px", display: "flex", justifyContent: "space-around" }}>
           {[
             { id: "passport", icon: "📖", label: "Passport" },
             { id: "explore", icon: "🗺️", label: "Explore" },
@@ -402,36 +429,51 @@ export default function Ventur() {
         {/* PLACE MODAL */}
         {selectedPlace && (
           <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "flex-end", zIndex: 50 }} onClick={() => setSelectedPlace(null)}>
-            <div style={{ width: "100%", background: GH.modalBg, borderRadius: "28px 28px 0 0", padding: 28, paddingBottom: 44, boxShadow: "0 -8px 40px rgba(0,0,0,0.5)" }} onClick={e => e.stopPropagation()}>
-              <div style={{ width: 40, height: 4, background: "rgba(255,255,255,0.2)", borderRadius: 2, margin: "0 auto 24px" }} />
-              <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
-                <div style={{ width: 64, height: 64, borderRadius: 18, background: selectedPlace.color + "22", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32 }}>{selectedPlace.emoji}</div>
-                <div>
+            <div style={{ width: "100%", background: GH.modalBg, borderRadius: "28px 28px 0 0", overflow: "hidden", boxShadow: "0 -8px 40px rgba(0,0,0,0.5)" }} onClick={e => e.stopPropagation()}>
+              {/* Photo hero */}
+              <div style={{ position: "relative", height: 180, overflow: "hidden", background: selectedPlace.color + "33", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 64 }}>
+                <span style={{ position: "relative", zIndex: 0 }}>{selectedPlace.emoji}</span>
+                <img
+                  src={`${API_BASE}/place-photo/${selectedPlace.id}?maxwidth=600`}
+                  alt={selectedPlace.name}
+                  style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 1 }}
+                  onError={e => { e.target.style.display = "none"; }}
+                />
+                <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: "linear-gradient(to bottom, transparent 40%, rgba(22,33,62,0.95))", zIndex: 2 }} />
+                <div style={{ position: "absolute", top: 12, left: "50%", transform: "translateX(-50%)", width: 40, height: 4, background: "rgba(255,255,255,0.35)", borderRadius: 2, zIndex: 3 }} />
+                <div style={{ position: "absolute", bottom: 16, left: 20, right: 20, zIndex: 3 }}>
                   <div style={{ color: "#fff", fontSize: 18, fontWeight: 700 }}>{selectedPlace.name}</div>
                   <div style={{ color: selectedPlace.color, fontSize: 11, fontFamily: "monospace", letterSpacing: 1 }}>{selectedPlace.category.toUpperCase()} • {selectedPlace.address}</div>
                 </div>
               </div>
-              <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 13, lineHeight: 1.6, marginBottom: 24 }}>{selectedPlace.description}</div>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.04)", borderRadius: 16, padding: "14px 18px", marginBottom: 20 }}>
-                <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 13 }}>Stamp Value</span>
-                <span style={{ color: selectedPlace.color, fontSize: 18, fontWeight: 700, fontFamily: "monospace" }}>+{selectedPlace.points} pts</span>
+
+              {/* Content */}
+              <div style={{ padding: "20px 28px 44px" }}>
+                <div style={{ color: "rgba(255,255,255,0.6)", fontSize: 13, lineHeight: 1.6, marginBottom: 20 }}>{selectedPlace.description}</div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "rgba(255,255,255,0.04)", borderRadius: 16, padding: "14px 18px", marginBottom: 20 }}>
+                  <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 13 }}>Stamp Value</span>
+                  <span style={{ color: selectedPlace.color, fontSize: 18, fontWeight: 700, fontFamily: "monospace" }}>+{selectedPlace.points} pts</span>
+                </div>
+                {selectedPlace.stamped ? (
+                  <div style={{ background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 18, padding: "16px", textAlign: "center" }}>
+                    <div style={{ color: "#10b981", fontSize: 16, fontWeight: 700 }}>✅ Already Stamped!</div>
+                    <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 12, marginTop: 4 }}>You visited this place</div>
+                  </div>
+                ) : scanning ? (
+                  <div style={{ background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.3)", borderRadius: 18, padding: "20px", textAlign: "center" }}>
+                    <div style={{ position: "relative", display: "inline-flex", alignItems: "center", justifyContent: "center", width: 60, height: 60, marginBottom: 8 }}>
+                      <span style={{ fontSize: 36 }}>📷</span>
+                      <div className="scan-ring" />
+                    </div>
+                    <div style={{ color: "#f59e0b", fontSize: 14, fontWeight: 700 }}>Scanning QR Code...</div>
+                    <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 12, marginTop: 4 }}>Hold steady!</div>
+                  </div>
+                ) : (
+                  <button className="stamp-btn" onClick={() => simulateScan(selectedPlace)} style={{ width: "100%", background: `linear-gradient(135deg, ${selectedPlace.color}, ${selectedPlace.color}99)`, border: "none", borderRadius: 18, padding: "18px", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", letterSpacing: 1 }}>
+                    📷 SCAN QR CODE TO STAMP
+                  </button>
+                )}
               </div>
-              {selectedPlace.stamped ? (
-                <div style={{ background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.3)", borderRadius: 18, padding: "16px", textAlign: "center" }}>
-                  <div style={{ color: "#10b981", fontSize: 16, fontWeight: 700 }}>✅ Already Stamped!</div>
-                  <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 12, marginTop: 4 }}>You visited this place</div>
-                </div>
-              ) : scanning ? (
-                <div style={{ background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.3)", borderRadius: 18, padding: "20px", textAlign: "center" }}>
-                  <div style={{ fontSize: 36, marginBottom: 8 }}>📷</div>
-                  <div style={{ color: "#f59e0b", fontSize: 14, fontWeight: 700 }}>Scanning QR Code...</div>
-                  <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 12, marginTop: 4 }}>Hold steady!</div>
-                </div>
-              ) : (
-                <button onClick={() => simulateScan(selectedPlace)} style={{ width: "100%", background: `linear-gradient(135deg, ${selectedPlace.color}, ${selectedPlace.color}99)`, border: "none", borderRadius: 18, padding: "18px", color: "#fff", fontSize: 15, fontWeight: 700, cursor: "pointer", letterSpacing: 1 }}>
-                  📷 SCAN QR CODE TO STAMP
-                </button>
-              )}
             </div>
           </div>
         )}
