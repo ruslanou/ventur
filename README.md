@@ -4,7 +4,7 @@
 
 Ventur is a gamified city exploration passport app for **Montgomery, Alabama**. Users discover local restaurants, bars, and attractions by collecting digital stamps — powered by AI recommendations and real city data.
 
-**Live App:** [frontend-navy-xi-18.vercel.app](https://frontend-navy-xi-18.vercel.app)
+**Live App:** [ventur-app.vercel.app](https://ventur-app.vercel.app)
 
 ---
 
