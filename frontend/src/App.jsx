@@ -93,6 +93,7 @@ export default function Ventur() {
   const [loadingPlaces, setLoadingPlaces] = useState(true);
   const [exploreFilter, setExploreFilter] = useState("All");
   const [confetti, setConfetti] = useState([]);
+  const swipeTouchStartX = useRef(null);
   const chatBottomRef = useRef(null);
 
   useEffect(() => {
@@ -180,8 +181,17 @@ export default function Ventur() {
   if (screen === "onboarding") {
     const s = onboardSteps[onboardStep];
     return (
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: "#0a0a0a", fontFamily: "'Georgia', serif" }}>
-        <div style={{ width: 390, height: 780, borderRadius: 40, boxShadow: "0 30px 80px rgba(0,0,0,0.8)", position: "relative", background: s.bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 40px 48px" }}>
+      <div className="app-wrapper" style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: "#0a0a0a", fontFamily: "'Georgia', serif" }}>
+        <div className="app-frame" style={{ boxShadow: "0 30px 80px rgba(0,0,0,0.8)", position: "relative", background: s.bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 40px 48px" }}
+          onTouchStart={e => { swipeTouchStartX.current = e.touches[0].clientX; }}
+          onTouchEnd={e => {
+            if (swipeTouchStartX.current === null) return;
+            const dx = e.changedTouches[0].clientX - swipeTouchStartX.current;
+            swipeTouchStartX.current = null;
+            if (dx < -50) { onboardStep < 2 ? setOnboardStep(onboardStep + 1) : setScreen("home"); }
+            else if (dx > 50 && onboardStep > 0) { setOnboardStep(onboardStep - 1); }
+          }}
+        >
           <div style={{ position: "absolute", inset: 0, borderRadius: 40, background: "radial-gradient(circle at 20% 20%, rgba(255,255,255,0.05) 0%, transparent 50%)", pointerEvents: "none" }} />
           <div style={{ position: "absolute", top: 40, right: 40, width: 100, height: 100, borderRadius: "50%", border: "2px dashed rgba(255,255,255,0.1)", pointerEvents: "none" }} />
           <div style={{ position: "absolute", bottom: 100, left: 30, width: 70, height: 70, borderRadius: "50%", border: "2px dashed rgba(255,255,255,0.1)", pointerEvents: "none" }} />
@@ -207,7 +217,7 @@ export default function Ventur() {
 
   return (
     <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: "#0a0a0a", fontFamily: "'Georgia', serif" }}>
-      <div style={{ width: 390, height: 780, borderRadius: 40, overflow: "hidden", boxShadow: "0 30px 80px rgba(0,0,0,0.8)", display: "flex", flexDirection: "column", background: GH.bg, position: "relative" }}>
+      <div className="app-frame" style={{ overflow: "hidden", boxShadow: "0 30px 80px rgba(0,0,0,0.8)", display: "flex", flexDirection: "column", background: GH.bg, position: "relative" }}>
 
         {justStamped && (
           <div className="toast-banner" style={{ position: "absolute", top: 20, left: 20, right: 20, background: justStamped.alreadyStamped ? "linear-gradient(135deg, #374151, #1f2937)" : "linear-gradient(135deg, #10b981, #059669)", borderRadius: 16, padding: "16px 20px", zIndex: 100, display: "flex", alignItems: "center", gap: 12, boxShadow: "0 10px 30px rgba(16,185,129,0.4)" }}>
